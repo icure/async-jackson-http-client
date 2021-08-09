@@ -15,13 +15,13 @@
  *
  */
 
-package io.icure.krient.parser
+package io.icure.asyncjacksonhttpclient.parser
 
 import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.core.async.ByteArrayFeeder
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.util.TokenBuffer
-import io.icure.krient.exception.WebClientException
+import io.icure.asyncjacksonhttpclient.exception.WebClientException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.ReceiveChannel

@@ -15,7 +15,7 @@
  *
  */
 
-package io.icure.krient.net
+package io.icure.asyncjacksonhttpclient.net
 
 import org.apache.http.client.utils.URIBuilder
 import org.apache.http.message.BasicNameValuePair

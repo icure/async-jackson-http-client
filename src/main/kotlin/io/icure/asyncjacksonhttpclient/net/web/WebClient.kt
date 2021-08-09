@@ -15,10 +15,10 @@
  *
  */
 
-package io.icure.krient.net.web
+package io.icure.asyncjacksonhttpclient.net.web
 
 import com.fasterxml.jackson.core.JsonParser
-import io.icure.krient.parser.toJsonEvents
+import io.icure.asyncjacksonhttpclient.parser.toJsonEvents
 import io.netty.handler.codec.http.HttpHeaderNames
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

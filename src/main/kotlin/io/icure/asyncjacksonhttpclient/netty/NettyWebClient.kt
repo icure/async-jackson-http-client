@@ -15,13 +15,13 @@
  *
  */
 
-package io.icure.krient.netty
+package io.icure.asyncjacksonhttpclient.netty
 
-import io.icure.krient.net.web.HttpMethod
-import io.icure.krient.net.web.Request
-import io.icure.krient.net.web.Response
-import io.icure.krient.net.web.ResponseStatus
-import io.icure.krient.net.web.WebClient
+import io.icure.asyncjacksonhttpclient.net.web.HttpMethod
+import io.icure.asyncjacksonhttpclient.net.web.Request
+import io.icure.asyncjacksonhttpclient.net.web.Response
+import io.icure.asyncjacksonhttpclient.net.web.ResponseStatus
+import io.icure.asyncjacksonhttpclient.net.web.WebClient
 import io.netty.buffer.Unpooled.EMPTY_BUFFER
 import io.netty.buffer.Unpooled.wrappedBuffer
 import io.netty.handler.codec.http.DefaultHttpHeaders

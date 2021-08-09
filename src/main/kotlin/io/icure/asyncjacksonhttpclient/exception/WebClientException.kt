@@ -15,7 +15,7 @@
  *
  */
 
-package io.icure.krient.exception
+package io.icure.asyncjacksonhttpclient.exception
 
 open class WebClientException(
     message: String,
