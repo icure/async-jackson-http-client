@@ -63,30 +63,8 @@ java {
     withSourcesJar()
 }
 
-tasks.withType<PublishToMavenRepository> {
+tasks.publish {
     doFirst {
         println("Artifact >>> ${project.group}:${project.name}:${project.version} <<< published to Maven repository")
-    }
-}
-
-val repoUsername: String by project
-val repoPassword: String by project
-val mavenReleasesRepository: String by project
-publishing {
-    publications {
-        create<MavenPublication>("async-jackson-http-client") {
-            from(components["java"])
-        }
-    }
-
-    repositories {
-        maven {
-            name = "Taktik"
-            url = uri(mavenReleasesRepository)
-            credentials {
-                username = repoUsername
-                password = repoPassword
-            }
-        }
     }
 }
