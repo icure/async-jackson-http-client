@@ -28,7 +28,7 @@ buildscript {
         maven { url = uri("https://maven.taktik.be/content/groups/public") }
     }
     dependencies {
-        classpath("com.taktik.gradle:gradle-plugin-git-version:1.0.13")
+        classpath("com.taktik.gradle:gradle-plugin-git-version:2.0.2")
     }
     plugins {
         `maven-publish`
@@ -66,5 +66,27 @@ java {
 tasks.publish {
     doFirst {
         println("Artifact >>> ${project.group}:${project.name}:${project.version} <<< published to Maven repository")
+    }
+}
+
+val repoUsername: String by project
+val repoPassword: String by project
+val mavenReleasesRepository: String by project
+publishing {
+    publications {
+        create<MavenPublication>(project.name) {
+            from(components["java"])
+        }
+    }
+
+    repositories {
+        maven {
+            name = "Taktik"
+            url = uri(mavenReleasesRepository)
+            credentials {
+                username = repoUsername
+                password = repoPassword
+            }
+        }
     }
 }
