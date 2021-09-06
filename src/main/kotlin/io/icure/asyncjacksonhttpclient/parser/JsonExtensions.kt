@@ -280,13 +280,7 @@ fun Flow<ByteBuffer>.toJsonEvents(asyncParser: com.fasterxml.jackson.core.JsonPa
 }
 
 @ExperimentalCoroutinesApi
-suspend fun <T> Flow<ByteBuffer>.toObject(type: Class<T>, mapper: ObjectMapper, emptyResponseAsNull: Boolean): T? =
-    mapper.createNonBlockingByteArrayParser().let { asyncParser ->
-        var buffer: TokenBuffer? = null
-        this.toJsonEvents(asyncParser).collect { (buffer ?: TokenBuffer(asyncParser).also { b -> buffer = b }).copyFromJsonEvent(it) }
-        buffer?.asParser(mapper)?.readValueAs(type)
-            ?: if (emptyResponseAsNull) null else throw WebClientException("Empty response is not allowed", 500, "")
-    }
+suspend inline fun <reified T> Flow<ByteBuffer>.toObject(mapper: ObjectMapper, emptyResponseAsNull: Boolean): T? = this.toObject(object : TypeReference<T>() {}, mapper, emptyResponseAsNull)
 
 @ExperimentalCoroutinesApi
 suspend fun <T> Flow<ByteBuffer>.toObject(type: TypeReference<T>, mapper: ObjectMapper, emptyResponseAsNull: Boolean): T? =

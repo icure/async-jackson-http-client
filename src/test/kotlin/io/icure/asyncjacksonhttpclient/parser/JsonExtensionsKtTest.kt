@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -29,13 +30,15 @@ class JsonExtensionsKtTest {
     fun testFlowOfObjects() = runBlocking {
         val bytes = objectMapper.writeValueAsBytes(listOf(TestClass("1", listOf("A","AA")), TestClass("2", listOf("B","BB"))))
         val items1: List<TestClass> = flowOf(ByteBuffer.wrap(bytes)).toObject(object : TypeReference<List<TestClass>>() {}, objectMapper, true)!!
-        val items2: List<TestClass> = flowToObject(flowOf(ByteBuffer.wrap(bytes)))!!
-        assertTrue(items1[1] is TestClass)
-        assertTrue(items2[2] is TestClass)
+        val items2: List<TestClass> = objectMapper.readValue(bytes)
+        val items3: List<TestClass> = flowToObject(flowOf(ByteBuffer.wrap(bytes)))!!
+        assertTrue(items1[0] is TestClass)
+        assertTrue(items2[0] is TestClass)
+        assertTrue(items3[0] is TestClass)
     }
 
     suspend inline fun <reified T>flowToObject(flow: Flow<ByteBuffer>): T? {
-        return flow.toObject(T::class.java, objectMapper, true)
+        return flow.toObject(objectMapper, true)
     }
 
 }

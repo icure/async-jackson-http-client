@@ -78,6 +78,7 @@ tasks.publish {
 val repoUsername: String by project
 val repoPassword: String by project
 val mavenReleasesRepository: String by project
+
 publishing {
     publications {
         create<MavenPublication>(project.name) {
