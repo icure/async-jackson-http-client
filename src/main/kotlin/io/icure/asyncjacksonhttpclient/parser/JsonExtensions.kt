@@ -19,6 +19,7 @@ package io.icure.asyncjacksonhttpclient.parser
 
 import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.core.async.ByteArrayFeeder
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.util.TokenBuffer
 import io.icure.asyncjacksonhttpclient.exception.WebClientException
@@ -282,12 +283,21 @@ fun Flow<ByteBuffer>.toJsonEvents(asyncParser: com.fasterxml.jackson.core.JsonPa
 suspend fun <T> Flow<ByteBuffer>.toObject(type: Class<T>, mapper: ObjectMapper, emptyResponseAsNull: Boolean): T? =
     mapper.createNonBlockingByteArrayParser().let { asyncParser ->
         var buffer: TokenBuffer? = null
-        this.toJsonEvents(asyncParser)
-            .collect { (buffer ?: TokenBuffer(asyncParser).also { b -> buffer = b }).copyFromJsonEvent(it) }
+        this.toJsonEvents(asyncParser).collect { (buffer ?: TokenBuffer(asyncParser).also { b -> buffer = b }).copyFromJsonEvent(it) }
         buffer?.asParser(mapper)?.readValueAs(type)
             ?: if (emptyResponseAsNull) null else throw WebClientException("Empty response is not allowed", 500, "")
     }
 
+@ExperimentalCoroutinesApi
+suspend fun <T> Flow<ByteBuffer>.toObject(type: TypeReference<T>, mapper: ObjectMapper, emptyResponseAsNull: Boolean): T? =
+    mapper.createNonBlockingByteArrayParser().let { asyncParser ->
+        var buffer: TokenBuffer? = null
+        this.toJsonEvents(asyncParser)
+            .collect { (buffer ?: TokenBuffer(asyncParser).also { b -> buffer = b }).copyFromJsonEvent(it) }
+
+        (buffer?.asParser(mapper)?.readValueAs(type) as T?)
+            ?: if (emptyResponseAsNull) null else throw WebClientException("Empty response is not allowed", 500, "")
+    }
 
 suspend fun ReceiveChannel<JsonEvent>.skipValue() {
     when (receive()) {
