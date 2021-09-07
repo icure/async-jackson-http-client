@@ -84,7 +84,7 @@ class NettyResponse(
     override fun toFlux(): Publisher<ByteBuffer> {
         return responseReceiver.response { clientResponse, flux ->
             val code = clientResponse.status().code()
-            statusHandlers[code]?.let {
+            (statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let {
                 flux.aggregate().asByteArray().flatMap { bytes ->
                     val res = it(object : ResponseStatus(code) {
                         override fun responseBodyAsString() = bytes.toString(Charsets.UTF_8)
