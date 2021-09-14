@@ -26,6 +26,7 @@ import io.netty.buffer.Unpooled.EMPTY_BUFFER
 import io.netty.buffer.Unpooled.wrappedBuffer
 import io.netty.handler.codec.http.DefaultHttpHeaders
 import io.netty.handler.codec.http.HttpHeaders
+import io.netty.handler.logging.LogLevel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -33,6 +34,7 @@ import kotlinx.coroutines.reactor.asFlux
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
 import reactor.netty.http.client.HttpClient
+import reactor.netty.transport.logging.AdvancedByteBufFormat
 import java.net.URI
 import java.nio.ByteBuffer
 import java.time.Duration
@@ -40,7 +42,8 @@ import java.time.Duration
 @ExperimentalCoroutinesApi
 class NettyWebClient : WebClient {
     override fun uri(uri: URI): Request {
-        return NettyRequest(HttpClient.create(), uri)
+        val client = HttpClient.create().wiretap("io.icure.asyncjacksonhttpclient.netty", LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL)
+        return NettyRequest(client, uri)
     }
 }
 
