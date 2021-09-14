@@ -17,8 +17,10 @@
 
 package io.icure.asyncjacksonhttpclient.net
 
+import org.apache.http.NameValuePair
 import org.apache.http.client.utils.URIBuilder
 import org.apache.http.message.BasicNameValuePair
+import java.net.URLEncoder
 
 fun java.net.URI.append(s: String?): java.net.URI {
     return s?.let { v -> URIBuilder(this).let { it.setPathSegments(it.pathSegments + v.trim('/').split("/")) }.build() }
@@ -29,6 +31,6 @@ fun java.net.URI.param(k: String, v: String): java.net.URI {
     return URIBuilder(this).setParameter(k, v).build()
 }
 
-fun java.net.URI.params(map: Map<String, String>): java.net.URI {
-    return URIBuilder(this).setParameters(map.entries.map { (k, v) -> BasicNameValuePair(k, v) }.toList()).build()
+fun java.net.URI.params(map: Map<String, List<String>>): java.net.URI {
+    return URIBuilder(this).setParameters(map.entries.flatMap { (k, v) -> v.map { BasicNameValuePair(k, URLEncoder.encode(it, Charsets.UTF_8) ) } }).build()
 }
