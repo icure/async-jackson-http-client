@@ -94,7 +94,7 @@ class NettyResponse(
 
             (statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let {
                 flux.aggregate().asByteArray().flatMap { bytes ->
-                    val res = it(object : ResponseStatus(code) {
+                    val res = it(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
                         override fun responseBodyAsString() = bytes.toString(Charsets.UTF_8)
                     })
                     if (res == Mono.empty<Throwable>()) Mono.just(ByteBuffer.wrap(bytes)) else res.flatMap {

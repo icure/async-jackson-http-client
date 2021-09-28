@@ -36,6 +36,7 @@ import java.nio.charset.CoderResult
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.Base64
+import kotlin.collections.Map
 import kotlin.math.roundToInt
 
 @ExperimentalCoroutinesApi
@@ -136,7 +137,7 @@ interface Response {
     }.buffer(buffer)
 }
 
-abstract class ResponseStatus(val statusCode: Int) {
+abstract class ResponseStatus(val statusCode: Int, val headers: Collection<Map.Entry<String, String>> = listOf()) {
     abstract fun responseBodyAsString(): String
 }
 
