@@ -293,6 +293,19 @@ suspend fun <T> Flow<ByteBuffer>.toObject(type: TypeReference<T>, mapper: Object
             ?: if (emptyResponseAsNull) null else throw WebClientException("Empty response is not allowed", 500, "")
     }
 
+@ExperimentalCoroutinesApi
+@Deprecated(message = "Use type reference instead of class")
+suspend fun <T> Flow<ByteBuffer>.toObject(clazz: Class<T>, mapper: ObjectMapper, emptyResponseAsNull: Boolean): T? =
+    mapper.createNonBlockingByteArrayParser().let { asyncParser ->
+        var buffer: TokenBuffer? = null
+        this.toJsonEvents(asyncParser)
+            .collect { (buffer ?: TokenBuffer(asyncParser).also { b -> buffer = b }).copyFromJsonEvent(it) }
+
+        (buffer?.asParser(mapper)?.readValueAs(clazz))
+            ?: if (emptyResponseAsNull) null else throw WebClientException("Empty response is not allowed", 500, "")
+    }
+
+
 suspend fun ReceiveChannel<JsonEvent>.skipValue() {
     when (receive()) {
         StartArray -> {
