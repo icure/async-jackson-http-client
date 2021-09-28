@@ -82,11 +82,16 @@ class NettyRequest(
 @ExperimentalCoroutinesApi
 class NettyResponse(
     private val responseReceiver: HttpClient.ResponseReceiver<*>,
-    private val statusHandlers: Map<Int, (ResponseStatus) -> Mono<out Throwable>> = mapOf()
+    private val statusHandlers: Map<Int, (ResponseStatus) -> Mono<out Throwable>> = mapOf(),
+    private val headerHandler: Map<String, (String) -> Mono<Unit>> = mapOf(),
 ) : Response {
     override fun toFlux(): Publisher<ByteBuffer> {
         return responseReceiver.response { clientResponse, flux ->
             val code = clientResponse.status().code()
+            if (headerHandler.isNotEmpty()) {
+                clientResponse.responseHeaders().forEach { (k, v) ->  headerHandler[k]?.let { it(v)} }
+            }
+
             (statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let {
                 flux.aggregate().asByteArray().flatMap { bytes ->
                     val res = it(object : ResponseStatus(code) {
@@ -107,6 +112,10 @@ class NettyResponse(
     }
 
     override fun onStatus(status: Int, handler: (ResponseStatus) -> Mono<out Throwable>): Response {
-        return NettyResponse(responseReceiver, statusHandlers + (status to handler))
+        return NettyResponse(responseReceiver, statusHandlers + (status to handler), headerHandler)
+    }
+
+    override fun onHeader(header: String, handler: (String) -> Mono<Unit>): Response {
+        return NettyResponse(responseReceiver, statusHandlers, headerHandler + (header to handler))
     }
 }
