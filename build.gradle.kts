@@ -15,12 +15,12 @@
  *
  */
 
-val kotlinVersion = "1.5.21"
-val kotlinCoroutinesVersion = "1.5.2"
+val kotlinVersion = "1.4.32"
+val kotlinCoroutinesVersion = "1.4.3"
 val jacksonVersion = "2.12.5"
 
 plugins {
-    kotlin("jvm") version "1.4.21"
+    kotlin("jvm") version "1.4.32"
 }
 
 buildscript {
