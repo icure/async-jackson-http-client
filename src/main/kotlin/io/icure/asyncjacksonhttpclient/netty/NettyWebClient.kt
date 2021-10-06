@@ -42,7 +42,7 @@ import java.time.Duration
 @ExperimentalCoroutinesApi
 class NettyWebClient : WebClient {
     override fun uri(uri: URI): Request {
-        val client = HttpClient.create().wiretap("io.icure.asyncjacksonhttpclient.netty", LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL)
+        val client = HttpClient.create().wiretap("io.icure.asyncjacksonhttpclient.netty", LogLevel.DEBUG, AdvancedByteBufFormat.HEX_DUMP)
         return NettyRequest(client, uri)
     }
 }
