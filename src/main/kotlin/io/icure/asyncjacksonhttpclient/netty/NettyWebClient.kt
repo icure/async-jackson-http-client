@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.reactor.asFlux
 import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.netty.http.client.HttpClient
 import reactor.netty.transport.logging.AdvancedByteBufFormat
@@ -85,14 +86,14 @@ class NettyResponse(
     private val statusHandlers: Map<Int, (ResponseStatus) -> Mono<out Throwable>> = mapOf(),
     private val headerHandler: Map<String, (String) -> Mono<Unit>> = mapOf(),
 ) : Response {
-    override fun toFlux(): Publisher<ByteBuffer> {
+    override fun toFlux(): Flux<ByteBuffer> {
         return responseReceiver.response { clientResponse, flux ->
             val code = clientResponse.status().code()
-            if (headerHandler.isNotEmpty()) {
-                clientResponse.responseHeaders().forEach { (k, v) -> headerHandler[k]?.let { it(v) } }
-            }
+            val headerHandlers = (if (headerHandler.isNotEmpty()) {
+                clientResponse.responseHeaders().fold(Mono.empty<Any>()) { m: Mono<*>, (k, v) -> m.then(headerHandler[k]?.let { it(v) } ?: Mono.empty()) }
+            } else Mono.empty())
 
-            (statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let {
+            headerHandlers.thenMany((statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let {
                 flux.aggregate().asByteArray().flatMap { bytes ->
                     val res = it(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
                         override fun responseBodyAsString() = bytes.toString(Charsets.UTF_8)
@@ -107,7 +108,7 @@ class NettyResponse(
                 val ba = ByteArray(it.readableBytes())
                 it.readBytes(ba) //Bytes need to be read now, before they become unavailable. If we just return the nioBuffer(), we have no guarantee that the bytes will be the same when the ByteBuffer will be processed down the flux
                 ByteBuffer.wrap(ba)
-            }
+            })
         }
     }
 
