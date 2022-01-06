@@ -31,7 +31,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.reactor.asFlux
-import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.netty.http.client.HttpClient
@@ -89,12 +88,14 @@ class NettyResponse(
     override fun toFlux(): Flux<ByteBuffer> {
         return responseReceiver.response { clientResponse, flux ->
             val code = clientResponse.status().code()
+
             val headerHandlers = (if (headerHandler.isNotEmpty()) {
                 clientResponse.responseHeaders().fold(Mono.empty<Any>()) { m: Mono<*>, (k, v) -> m.then(headerHandler[k]?.let { it(v) } ?: Mono.empty()) }
             } else Mono.empty())
 
             headerHandlers.thenMany((statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let {
-                flux.aggregate().asByteArray().flatMap { bytes ->
+                val agg = flux.aggregate().asByteArray()
+                agg.flatMap { bytes ->
                     val res = it(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
                         override fun responseBodyAsString() = bytes.toString(Charsets.UTF_8)
                     })
@@ -103,7 +104,15 @@ class NettyResponse(
                     } else {
                         res.flatMap { Mono.error(it) }
                     }
-                }
+                }.switchIfEmpty(it(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
+                    override fun responseBodyAsString() = ""
+                }).let { res ->
+                    if (res == Mono.empty<Throwable>()) {
+                        Mono.just(ByteBuffer.wrap(ByteArray(0)))
+                    } else {
+                        res.flatMap { Mono.error(it) }
+                    }
+                })
             } ?: flux.map {
                 val ba = ByteArray(it.readableBytes())
                 it.readBytes(ba) //Bytes need to be read now, before they become unavailable. If we just return the nioBuffer(), we have no guarantee that the bytes will be the same when the ByteBuffer will be processed down the flux
