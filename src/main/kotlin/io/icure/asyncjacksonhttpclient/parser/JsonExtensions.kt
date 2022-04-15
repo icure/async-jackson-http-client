@@ -200,15 +200,11 @@ fun Flow<CharBuffer>.split(delimiter: Char, emptyGroupCallback: (() -> Unit)? = 
             var lastDelimiterPosition = charBuffer.position() - 1
             for (position in charBuffer.position() until charBuffer.limit()) {
                 if (charBuffer[position] == delimiter) {
-                    if (position > charBuffer.position()) {
-                        if ((position - lastDelimiterPosition) > 1) {
-                            buffers.add(charBuffer.duplicate().apply {
-                                position(lastDelimiterPosition + 1)
-                                limit(position)
-                            })
-                        } else {
-                            emptyGroupCallback?.let { it() }
-                        }
+                    if (position > charBuffer.position() && (position - lastDelimiterPosition) > 1) {
+                        buffers.add(charBuffer.duplicate().apply {
+                            position(lastDelimiterPosition + 1)
+                            limit(position)
+                        })
                     }
                     lastDelimiterPosition = position
                     if (buffers.isNotEmpty()) {
@@ -217,10 +213,12 @@ fun Flow<CharBuffer>.split(delimiter: Char, emptyGroupCallback: (() -> Unit)? = 
                     }
                 }
             }
-            if (charBuffer.limit() - lastDelimiterPosition > 1) {
-                buffers.add(charBuffer.duplicate().apply {
+            val range = charBuffer.limit() - lastDelimiterPosition
+            when {
+                range > 1 -> buffers.add(charBuffer.duplicate().apply {
                     position(lastDelimiterPosition + 1)
                 })
+                range == 1 -> emptyGroupCallback?.let { it() }
             }
         }
         if (buffers.isNotEmpty()) {
