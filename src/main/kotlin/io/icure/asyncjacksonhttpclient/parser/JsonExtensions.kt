@@ -192,7 +192,7 @@ fun Iterable<ByteBuffer>.toJsonEvents(asyncParser: com.fasterxml.jackson.core.Js
 
 @FlowPreview
 @ExperimentalCoroutinesApi
-fun Flow<CharBuffer>.split(delimiter: Char): Flow<List<CharBuffer>> = flow {
+fun Flow<CharBuffer>.split(delimiter: Char, emptyGroupCallback: (() -> Unit)? = null): Flow<List<CharBuffer>> = flow {
     coroutineScope {
         var buffers = LinkedList<CharBuffer>()
         val buffersChannel = this@split.produceIn(this)
@@ -200,11 +200,15 @@ fun Flow<CharBuffer>.split(delimiter: Char): Flow<List<CharBuffer>> = flow {
             var lastDelimiterPosition = charBuffer.position() - 1
             for (position in charBuffer.position() until charBuffer.limit()) {
                 if (charBuffer[position] == delimiter) {
-                    if (position > charBuffer.position() && (position - lastDelimiterPosition) > 1) {
-                        buffers.add(charBuffer.duplicate().apply {
-                            position(lastDelimiterPosition + 1)
-                            limit(position)
-                        })
+                    if (position > charBuffer.position()) {
+                        if ((position - lastDelimiterPosition) > 1) {
+                            buffers.add(charBuffer.duplicate().apply {
+                                position(lastDelimiterPosition + 1)
+                                limit(position)
+                            })
+                        } else {
+                            emptyGroupCallback?.let { it() }
+                        }
                     }
                     lastDelimiterPosition = position
                     if (buffers.isNotEmpty()) {

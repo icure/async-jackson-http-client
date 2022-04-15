@@ -93,10 +93,10 @@ class NettyResponse(
                 clientResponse.responseHeaders().fold(Mono.empty<Any>()) { m: Mono<*>, (k, v) -> m.then(headerHandler[k]?.let { it(v) } ?: Mono.empty()) }
             } else Mono.empty())
 
-            headerHandlers.thenMany((statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let {
+            headerHandlers.thenMany((statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let { handler ->
                 val agg = flux.aggregate().asByteArray()
                 agg.flatMap { bytes ->
-                    val res = it(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
+                    val res = handler(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
                         override fun responseBodyAsString() = bytes.toString(Charsets.UTF_8)
                     })
                     if (res == Mono.empty<Throwable>()) {
@@ -104,7 +104,7 @@ class NettyResponse(
                     } else {
                         res.flatMap { Mono.error(it) }
                     }
-                }.switchIfEmpty(it(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
+                }.switchIfEmpty(handler(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
                     override fun responseBodyAsString() = ""
                 }).let { res ->
                     if (res == Mono.empty<Throwable>()) {
