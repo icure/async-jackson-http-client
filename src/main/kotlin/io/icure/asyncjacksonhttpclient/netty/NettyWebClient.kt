@@ -84,8 +84,10 @@ class NettyResponse(
     private val responseReceiver: HttpClient.ResponseReceiver<*>,
     private val statusHandlers: Map<Int, (ResponseStatus) -> Mono<out Throwable>> = mapOf(),
     private val headerHandler: Map<String, (String) -> Mono<Unit>> = mapOf(),
-) : Response {
+    private val timingHandler: ((Long) -> Mono<Unit>)? = null,
+    ) : Response {
     override fun toFlux(): Flux<ByteBuffer> {
+        val start = System.currentTimeMillis()
         return responseReceiver.response { clientResponse, flux ->
             val code = clientResponse.status().code()
 
@@ -118,14 +120,18 @@ class NettyResponse(
                 it.readBytes(ba) //Bytes need to be read now, before they become unavailable. If we just return the nioBuffer(), we have no guarantee that the bytes will be the same when the ByteBuffer will be processed down the flux
                 ByteBuffer.wrap(ba)
             })
-        }
+        }.doOnTerminate { timingHandler?.let { it(System.currentTimeMillis() - start) } }
     }
 
     override fun onStatus(status: Int, handler: (ResponseStatus) -> Mono<out Throwable>): Response {
-        return NettyResponse(responseReceiver, statusHandlers + (status to handler), headerHandler)
+         return NettyResponse(responseReceiver, statusHandlers + (status to handler), headerHandler, timingHandler)
     }
 
     override fun onHeader(header: String, handler: (String) -> Mono<Unit>): Response {
-        return NettyResponse(responseReceiver, statusHandlers, headerHandler + (header to handler))
+        return NettyResponse(responseReceiver, statusHandlers, headerHandler + (header to handler), timingHandler)
+    }
+
+    override fun withTiming(handler: (Long) -> Mono<Unit>): Response {
+        return NettyResponse(responseReceiver, statusHandlers, headerHandler, handler)
     }
 }
