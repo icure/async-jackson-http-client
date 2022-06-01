@@ -88,7 +88,7 @@ class NettyResponse(
     ) : Response {
     override fun toFlux(): Flux<ByteBuffer> {
         val start = System.currentTimeMillis()
-        return responseReceiver.response { clientResponse, flux ->
+        return Flux.deferContextual { ctx -> responseReceiver.response { clientResponse, flux ->
             val code = clientResponse.status().code()
 
             val headerHandlers = (if (headerHandler.isNotEmpty()) {
@@ -120,7 +120,9 @@ class NettyResponse(
                 it.readBytes(ba) //Bytes need to be read now, before they become unavailable. If we just return the nioBuffer(), we have no guarantee that the bytes will be the same when the ByteBuffer will be processed down the flux
                 ByteBuffer.wrap(ba)
             })
-        }.doOnTerminate { timingHandler?.let { it(System.currentTimeMillis() - start) } }
+        }.doOnTerminate {
+            timingHandler?.let { it(System.currentTimeMillis() - start).contextWrite(ctx).subscribe() }
+        } }
     }
 
     override fun onStatus(status: Int, handler: (ResponseStatus) -> Mono<out Throwable>): Response {
