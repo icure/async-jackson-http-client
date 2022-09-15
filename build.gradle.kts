@@ -30,7 +30,7 @@ buildscript {
     }
     dependencies {
         classpath("com.taktik.gradle:gradle-plugin-maven-repository:1.0.2")
-        classpath("com.taktik.gradle:gradle-plugin-git-version:2.0.2")
+        classpath("com.taktik.gradle:gradle-plugin-git-version:2.0.4")
     }
 }
 
