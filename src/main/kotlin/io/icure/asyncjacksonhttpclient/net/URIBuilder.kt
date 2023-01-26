@@ -20,13 +20,13 @@ package io.icure.asyncjacksonhttpclient.net
 import java.net.URI
 
 
-fun URI.append(s: String?): URI {
-    return s?.let { v -> URI(
+fun URI.append(pathComponent: String?): URI {
+    return pathComponent?.let { p -> URI(
         this.scheme,
         this.userInfo,
         this.host,
         this.port,
-        ("${this.path.trimEnd('/')}/${v.trim('/')}"),
+        ("${this.path.trimEnd('/')}/${p.trim('/')}"),
         this.query,
         this.fragment
     ) } ?: this
