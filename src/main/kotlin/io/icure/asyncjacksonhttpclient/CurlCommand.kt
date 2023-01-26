@@ -178,18 +178,18 @@ class CurlCommand {
             }
 
             private fun isAscii(c: Char): Boolean {
-                return c.toInt() <= 127
+                return c.code <= 127
             }
 
             private fun isAsciiPrintable(c: Char): Boolean {
-                return c.toInt() >= 32 && c.toInt() < 127
+                return c.code in 32..126
             }
 
             private fun escapeAsHex(c: Char): String {
-                val code = c.toInt()
+                val code = c.code
                 return if (code < 256) {
-                    String.format("\\x%02x", c.toInt())
-                } else String.format("\\u%04x", c.toInt())
+                    String.format("\\x%02x", c.code)
+                } else String.format("\\u%04x", c.code)
             }
 
             private fun quoteStringWin(s: String?): String {

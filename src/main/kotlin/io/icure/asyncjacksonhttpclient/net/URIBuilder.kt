@@ -17,20 +17,30 @@
 
 package io.icure.asyncjacksonhttpclient.net
 
-import org.apache.http.NameValuePair
-import org.apache.http.client.utils.URIBuilder
-import org.apache.http.message.BasicNameValuePair
-import java.net.URLEncoder
+import java.net.URI
 
-fun java.net.URI.append(s: String?): java.net.URI {
-    return s?.let { v -> URIBuilder(this).let { it.setPathSegments(it.pathSegments + v.trim('/').split("/")) }.build() }
-        ?: this
-}
+fun URI.append(pathComponent: String?): URI = pathComponent?.let { p -> URI(
+    this.scheme,
+    this.userInfo,
+    this.host,
+    this.port,
+    ("${this.path.trimEnd('/')}/${p.trim('/')}"),
+    this.query,
+    this.fragment
+) } ?: this
 
-fun java.net.URI.param(k: String, v: String): java.net.URI {
-    return URIBuilder(this).setParameter(k, v).build()
-}
+fun URI.param(k: String, v: String): URI = URI(
+    this.scheme,
+    this.userInfo,
+    this.host,
+    this.port,
+    this.path,
+    (this.query?.split("&") ?: emptyList()).filter { it.isNotBlank() }.plus("$k=$v").joinToString("&"),
+    this.fragment
+)
 
-fun java.net.URI.params(map: Map<String, List<String>>): java.net.URI {
-    return URIBuilder(this).setParameters(map.entries.flatMap { (k, v) -> v.map { BasicNameValuePair(k, it ) } }).build()
+fun URI.params(map: Map<String, List<String>>): URI = map.entries.fold(this) { uri, (k, values) ->
+    values.fold(uri) { uri, v ->
+        uri.param(k, v)
+    }
 }
