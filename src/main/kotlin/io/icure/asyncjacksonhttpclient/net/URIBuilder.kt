@@ -26,7 +26,7 @@ fun URI.append(s: String?): URI {
         this.userInfo,
         this.host,
         this.port,
-        ("${this.path.trimEnd('/')}/${v.trim().split('/')}"),
+        ("${this.path.trimEnd('/')}/${v.trim('/')}"),
         this.query,
         this.fragment
     ) } ?: this
