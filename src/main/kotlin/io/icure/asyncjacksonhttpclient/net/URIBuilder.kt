@@ -19,15 +19,28 @@ package io.icure.asyncjacksonhttpclient.net
 
 import java.net.URI
 
+fun URI.append(pathComponent: String?): URI = pathComponent?.let { p -> URI(
+    this.scheme,
+    this.userInfo,
+    this.host,
+    this.port,
+    ("${this.path.trimEnd('/')}/${p.trim('/')}"),
+    this.query,
+    this.fragment
+) } ?: this
 
-fun URI.append(pathComponent: String?): URI {
-    return pathComponent?.let { p -> URI(
-        this.scheme,
-        this.userInfo,
-        this.host,
-        this.port,
-        ("${this.path.trimEnd('/')}/${p.trim('/')}"),
-        this.query,
-        this.fragment
-    ) } ?: this
+fun URI.param(k: String, v: String): URI = URI(
+    this.scheme,
+    this.userInfo,
+    this.host,
+    this.port,
+    this.path,
+    (this.query?.split("&") ?: emptyList()).filter { it.isNotBlank() }.plus("$k=$v").joinToString("&"),
+    this.fragment
+)
+
+fun URI.params(map: Map<String, List<String>>): URI = map.entries.fold(this) { uri, (k, values) ->
+    values.fold(uri) { uri, v ->
+        uri.param(k, v)
+    }
 }
