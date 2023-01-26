@@ -316,6 +316,7 @@ suspend fun ReceiveChannel<JsonEvent>.skipValue() {
                 when (receive()) {
                     StartArray -> level++
                     EndArray -> level--
+                    else -> {}
                 }
             }
         }
@@ -325,9 +326,12 @@ suspend fun ReceiveChannel<JsonEvent>.skipValue() {
                 when (receive()) {
                     StartObject -> level++
                     EndObject -> level--
+                    else -> {}
                 }
             }
         }
+
+        else -> {}
     }
 }
 
@@ -357,6 +361,7 @@ suspend fun ReceiveChannel<JsonEvent>.nextValue(): List<JsonEvent> {
                 when (otherEvent) {
                     StartArray -> level++
                     EndArray -> level--
+                    else -> {}
                 }
             }
         }
@@ -368,9 +373,12 @@ suspend fun ReceiveChannel<JsonEvent>.nextValue(): List<JsonEvent> {
                 when (otherEvent) {
                     StartObject -> level++
                     EndObject -> level--
+                    else -> {}
                 }
             }
         }
+
+        else -> {}
     }
     return events
 }
@@ -389,6 +397,7 @@ suspend fun ReceiveChannel<JsonEvent>.nextValue(asyncParser: com.fasterxml.jacks
                     when (otherEvent) {
                         StartArray -> level++
                         EndArray -> level--
+                        else -> {}
                     }
                 }
             }
@@ -400,9 +409,12 @@ suspend fun ReceiveChannel<JsonEvent>.nextValue(asyncParser: com.fasterxml.jacks
                     when (otherEvent) {
                         StartObject -> level++
                         EndObject -> level--
+                        else -> {}
                     }
                 }
             }
+
+            else -> {}
         }
         events
     }

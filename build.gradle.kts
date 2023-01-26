@@ -15,12 +15,12 @@
  *
  */
 
-val kotlinVersion = "1.4.32"
-val kotlinCoroutinesVersion = "1.4.3"
-val jacksonVersion = "2.12.5"
+val kotlinVersion = "1.7.20"
+val kotlinCoroutinesVersion = "1.6.4"
+val jacksonVersion = "2.13.5"
 
 plugins {
-    kotlin("jvm") version "1.4.32"
+    kotlin("jvm") version "1.7.20"
 }
 
 buildscript {
@@ -50,9 +50,8 @@ dependencies {
     implementation(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = kotlinVersion)
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = kotlinCoroutinesVersion)
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-reactor", version = kotlinCoroutinesVersion)
-    implementation(group = "io.projectreactor.netty", name = "reactor-netty", version = "1.0.11")
+    implementation(group = "io.projectreactor.netty", name = "reactor-netty", version = "1.0.27")
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jacksonVersion)
-    implementation(group = "org.apache.httpcomponents", name = "httpclient", version = "4.5.13")
 
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = "5.8.0")
     testImplementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jacksonVersion)
