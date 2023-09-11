@@ -15,12 +15,15 @@
  *
  */
 
-val kotlinVersion = "1.7.20"
+val kotlinVersion = "1.8.10"
 val kotlinCoroutinesVersion = "1.6.4"
 val jacksonVersion = "2.13.5"
+val reactorNettyVersion = "1.0.35"
 
 plugins {
-    kotlin("jvm") version "1.7.20"
+    kotlin("jvm") version "1.8.10"
+    id("com.taktik.gradle.maven-repository") version "1.0.7"
+    id("com.taktik.gradle.git-version") version "2.0.8-gb47b2d0e35"
 }
 
 buildscript {
@@ -29,29 +32,23 @@ buildscript {
         maven { url = uri("https://maven.taktik.be/content/groups/public") }
     }
     dependencies {
-        classpath("com.taktik.gradle:gradle-plugin-maven-repository:1.0.2")
-        classpath("com.taktik.gradle:gradle-plugin-git-version:2.0.4")
+        classpath("com.taktik.gradle:gradle-plugin-maven-repository:1.0.7")
+        classpath("com.taktik.gradle:gradle-plugin-git-version:2.0.8-gb47b2d0e35")
     }
 }
-
-apply(plugin = "maven-repository")
-apply(plugin = "git-version")
 
 val gitVersion: String? by project
 group = "io.icure"
 version = gitVersion ?: "0.0.1-SNAPSHOT"
 
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = kotlinVersion)
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = kotlinCoroutinesVersion)
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-reactor", version = kotlinCoroutinesVersion)
-    implementation(group = "io.projectreactor.netty", name = "reactor-netty", version = "1.0.27")
+    implementation(group = "io.projectreactor.netty", name = "reactor-netty", version = reactorNettyVersion)
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jacksonVersion)
+    implementation(group = "org.apache.httpcomponents", name = "httpclient", version = "4.5.14")
 
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = "5.8.0")
     testImplementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jacksonVersion)
@@ -60,13 +57,13 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 }
