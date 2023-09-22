@@ -152,4 +152,14 @@ class URITest {
         val expected = URI.create("http://example.com/path?key=value1&key=value2")
         assertEquals(expected, uri.params(parameters))
     }
+
+    @Test
+    fun `parameters in the URI are correctly UrlEncoded even if they contain UTF characters`() {
+        val uri = URI.create("https://example.com/path")
+            .param("key1","[\"\uFFF0\"]")
+            .param("key2", "[\"v1\", \"v2\"]")
+        val expected = "https://example.com/path?key1=[%22%25EF%25BF%25B0%22]&key2=[%22v1%22,%20%22v2%22]"
+        val actual = uri.toString()
+        assertEquals(expected, actual)
+    }
 }

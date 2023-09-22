@@ -48,7 +48,6 @@ dependencies {
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-reactor", version = kotlinCoroutinesVersion)
     implementation(group = "io.projectreactor.netty", name = "reactor-netty", version = reactorNettyVersion)
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jacksonVersion)
-    implementation(group = "org.apache.httpcomponents", name = "httpclient", version = "4.5.14")
 
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = "5.8.0")
     testImplementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jacksonVersion)
