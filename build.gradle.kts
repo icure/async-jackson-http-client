@@ -19,6 +19,7 @@ val kotlinVersion = "1.8.10"
 val kotlinCoroutinesVersion = "1.6.4"
 val jacksonVersion = "2.13.5"
 val reactorNettyVersion = "1.0.35"
+val nettyVersion = "4.1.97.Final"
 
 plugins {
     kotlin("jvm") version "1.8.10"

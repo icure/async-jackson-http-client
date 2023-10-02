@@ -85,10 +85,10 @@ class URITest {
         assertEquals(expected, uri.params(parameters))
     }
     @Test
-    fun `add multiple parameters to URI with existing parameters and fragment`() {
-        val uri = URI.create("http://example.com?param1=value1#fragment")
+    fun `add multiple parameters to URI with existing parameters, user info and fragment`() {
+        val uri = URI.create("http://a:b@example.com?param1=value1#fragment")
         val parameters = mapOf("key1" to listOf("value1"), "key2" to listOf("value2"))
-        val expected = URI.create("http://example.com?param1=value1&key1=value1&key2=value2#fragment")
+        val expected = URI.create("http://a:b@example.com?param1=value1&key1=value1&key2=value2#fragment")
         assertEquals(expected, uri.params(parameters))
     }
     @Test
@@ -151,5 +151,15 @@ class URITest {
         val parameters = mapOf("key" to listOf("value1", "value2"))
         val expected = URI.create("http://example.com/path?key=value1&key=value2")
         assertEquals(expected, uri.params(parameters))
+    }
+
+    @Test
+    fun `parameters in the URI are correctly UrlEncoded even if they contain UTF characters`() {
+        val uri = URI.create("https://example.com/path")
+            .param("key1","[\"\uFFF0\"]")
+            .param("key2", "[\"v1\", \"v2\"]")
+        val expected = "https://example.com/path?key1=%5B%22%EF%BF%B0%22%5D&key2=%5B%22v1%22%2C+%22v2%22%5D"
+        val actual = uri.toString()
+        assertEquals(expected, actual)
     }
 }

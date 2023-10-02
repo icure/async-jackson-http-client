@@ -18,29 +18,61 @@
 package io.icure.asyncjacksonhttpclient.net
 
 import java.net.URI
+import java.net.URLEncoder
 
-fun URI.append(pathComponent: String?): URI = pathComponent?.let { p -> URI(
-    this.scheme,
-    this.userInfo,
-    this.host,
-    this.port,
-    ("${this.path.trimEnd('/')}/${p.trim('/')}"),
-    this.query,
-    this.fragment
-) } ?: this
+fun URI.append(pathComponent: String?): URI = pathComponent?.let { p ->
+    URI(
+        buildString {
+            appendSchemeToPath(this@append.scheme, this@append.userInfo, this@append.host, this@append.port, this@append.path.trimEnd('/'))
+            append("/")
+            append(p.trim('/'))
+            this@append.rawQuery?.takeIf { it.isNotBlank() }?.also {
+                append("?$it")
+            }
+            this@append.fragment?.takeIf { it.isNotBlank() }?.also {
+                append("#$it")
+            }
+        }
+    )
+} ?: this
 
-fun URI.param(k: String, v: String): URI = URI(
-    this.scheme,
-    this.userInfo,
-    this.host,
-    this.port,
-    this.path,
-    (this.query?.split("&") ?: emptyList()).filter { it.isNotBlank() }.plus("$k=$v").joinToString("&"),
-    this.fragment
+fun URI.param(k: String, v: String, uriEncode: Boolean = true): URI = URI(
+    buildString {
+        appendSchemeToPath(this@param.scheme, this@param.userInfo, this@param.host, this@param.port, this@param.path)
+        (this@param.rawQuery?.split("&") ?: emptyList()).filter { it.isNotBlank() }.plus(
+            "$k=${
+                if (uriEncode) URLEncoder.encode(v, Charsets.UTF_8) else v
+            }"
+        ).joinToString("&").takeIf { it.isNotBlank() }?.also {
+            append("?$it")
+        }
+        this@param.fragment?.takeIf { it.isNotBlank() }?.also {
+            append("#$it")
+        }
+    }
 )
 
-fun URI.params(map: Map<String, List<String>>): URI = map.entries.fold(this) { uri, (k, values) ->
-    values.fold(uri) { uri, v ->
-        uri.param(k, v)
+private fun StringBuilder.appendSchemeToPath(
+    scheme: String?,
+    userInfo: String?,
+    host: String?,
+    port: Int,
+    path: String
+) {
+    append(scheme)
+    append("://")
+    userInfo?.takeIf { it.isNotEmpty() }?.also { append("$it@") }
+    append(host)
+    port.takeIf { it > 0 }?.also { append(":$it") }
+    if (path.isNotBlank() && !path.startsWith("/")) {
+        append("/")
     }
+    append(path)
 }
+
+fun URI.params(map: Map<String, List<String>>, uriEncode: Boolean = true): URI =
+    map.entries.fold(this) { uri, (k, values) ->
+        values.fold(uri) { uri, v ->
+            uri.param(k, v, uriEncode)
+        }
+    }
