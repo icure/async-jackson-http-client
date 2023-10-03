@@ -31,6 +31,7 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset.Charset
+import java.nio.charset.CoderMalfunctionError
 import java.nio.charset.CoderResult
 import java.nio.charset.StandardCharsets
 import java.time.Duration
@@ -80,13 +81,10 @@ interface Response {
     fun toBytesFlow(buffer: Int = 1) = toFlow().buffer(buffer)
     fun toJsonEvents(asyncParser: JsonParser, buffer: Int = 1) = toBytesFlow(buffer).toJsonEvents(asyncParser)
     fun toTextFlow(charset: Charset = StandardCharsets.UTF_8, buffer: Int = 1): Flow<CharBuffer> = flow<CharBuffer> {
-        val decoder = charset.newDecoder()
+        var decoder = charset.newDecoder()
         var remainingBytes: ByteBuffer? = null
-        var skip = false
-        var error: Exception? = null
 
         toFlow().collect { bb ->
-            if (!skip) {
                 var cb = CharBuffer.allocate(
                     ((bb.remaining() + (remainingBytes?.remaining() ?: 0)) * decoder.averageCharsPerByte()).roundToInt()
                 )
@@ -117,15 +115,13 @@ interface Response {
                         } else null
                     }
                     else -> {
-                        error = IllegalStateException("Error decoding response : $coderResult")
-                        skip = true
+                        //In case of error, we emit what has been decoded so far, and we purge the buffer
+                        emit(cb)
+                        decoder = charset.newDecoder()
                         null
                     }
                 }
-            }
         }
-
-        error?.let { throw it }
 
         remainingBytes?.let {
             if (it.hasRemaining()) {
