@@ -25,7 +25,7 @@ fun URI.append(pathComponent: String?): URI = pathComponent?.let { p ->
         buildString {
             appendSchemeToPath(this@append.scheme, this@append.userInfo, this@append.host, this@append.port, this@append.path.trimEnd('/'))
             append("/")
-            append(p.trim('/'))
+            append(URLEncoder.encode(p.trim('/'), Charsets.UTF_8))
             this@append.rawQuery?.takeIf { it.isNotBlank() }?.also {
                 append("?$it")
             }
@@ -72,7 +72,7 @@ private fun StringBuilder.appendSchemeToPath(
 
 fun URI.params(map: Map<String, List<String>>, uriEncode: Boolean = true): URI =
     map.entries.fold(this) { uri, (k, values) ->
-        values.fold(uri) { uri, v ->
-            uri.param(k, v, uriEncode)
+        values.fold(uri) { uriAcc, v ->
+            uriAcc.param(k, v, uriEncode)
         }
     }
