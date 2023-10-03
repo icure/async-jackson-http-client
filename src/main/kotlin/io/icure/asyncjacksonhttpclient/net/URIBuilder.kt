@@ -20,16 +20,16 @@ package io.icure.asyncjacksonhttpclient.net
 import java.net.URI
 import java.net.URLEncoder
 
-fun URI.append(pathComponent: String?): URI = pathComponent?.let { p ->
+fun URI.addSinglePathComponent(pathComponent: String?): URI = pathComponent?.let { p ->
     URI(
         buildString {
-            appendSchemeToPath(this@append.scheme, this@append.userInfo, this@append.host, this@append.port, this@append.path.trimEnd('/'))
+            appendSchemeToPath(this@addSinglePathComponent.scheme, this@addSinglePathComponent.userInfo, this@addSinglePathComponent.host, this@addSinglePathComponent.port, this@addSinglePathComponent.path.trimEnd('/'))
             append("/")
             append(URLEncoder.encode(p.trim('/'), Charsets.UTF_8))
-            this@append.rawQuery?.takeIf { it.isNotBlank() }?.also {
+            this@addSinglePathComponent.rawQuery?.takeIf { it.isNotBlank() }?.also {
                 append("?$it")
             }
-            this@append.fragment?.takeIf { it.isNotBlank() }?.also {
+            this@addSinglePathComponent.fragment?.takeIf { it.isNotBlank() }?.also {
                 append("#$it")
             }
         }
