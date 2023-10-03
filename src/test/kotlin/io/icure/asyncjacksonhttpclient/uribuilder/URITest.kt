@@ -26,6 +26,16 @@ class URITest {
     }
 
     @Test
+    fun `append path component to URI with characters that should be URLEncoded and then a parameter`() {
+        val uri = URI.create("http://example.com")
+        val pathComponent = "test|param"
+        val parameterKey = "key"
+        val parameterValue = "value+2"
+        val expected = URI.create("http://example.com/test%7Cparam?key=value%2B2")
+        assertEquals(expected, uri.addSinglePathComponent(pathComponent).param(parameterKey, parameterValue))
+    }
+
+    @Test
     fun `append path component to URI with existing path`() {
         val uri = URI.create("http://example.com/path")
         val pathComponent = "test"
