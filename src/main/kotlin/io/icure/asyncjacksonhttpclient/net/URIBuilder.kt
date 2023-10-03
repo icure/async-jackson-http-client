@@ -23,7 +23,7 @@ import java.net.URLEncoder
 fun URI.addSinglePathComponent(pathComponent: String?): URI = pathComponent?.let { p ->
     URI(
         buildString {
-            appendSchemeToPath(this@addSinglePathComponent.scheme, this@addSinglePathComponent.userInfo, this@addSinglePathComponent.host, this@addSinglePathComponent.port, this@addSinglePathComponent.path.trimEnd('/'))
+            appendSchemeToPath(this@addSinglePathComponent.scheme, this@addSinglePathComponent.userInfo, this@addSinglePathComponent.host, this@addSinglePathComponent.port, this@addSinglePathComponent.rawPath.trimEnd('/'))
             append("/")
             append(URLEncoder.encode(p.trim('/'), Charsets.UTF_8))
             this@addSinglePathComponent.rawQuery?.takeIf { it.isNotBlank() }?.also {
@@ -38,7 +38,7 @@ fun URI.addSinglePathComponent(pathComponent: String?): URI = pathComponent?.let
 
 fun URI.param(k: String, v: String, uriEncode: Boolean = true): URI = URI(
     buildString {
-        appendSchemeToPath(this@param.scheme, this@param.userInfo, this@param.host, this@param.port, this@param.path)
+        appendSchemeToPath(this@param.scheme, this@param.userInfo, this@param.host, this@param.port, this@param.rawPath)
         (this@param.rawQuery?.split("&") ?: emptyList()).filter { it.isNotBlank() }.plus(
             "$k=${
                 if (uriEncode) URLEncoder.encode(v, Charsets.UTF_8) else v
