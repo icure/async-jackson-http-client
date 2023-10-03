@@ -1,6 +1,6 @@
 package io.icure.asyncjacksonhttpclient.uribuilder
 
-import io.icure.asyncjacksonhttpclient.net.append
+import io.icure.asyncjacksonhttpclient.net.addSinglePathComponent
 import io.icure.asyncjacksonhttpclient.net.param
 import io.icure.asyncjacksonhttpclient.net.params
 import org.junit.jupiter.api.Assertions.*
@@ -14,7 +14,7 @@ class URITest {
         val uri = URI.create("http://example.com")
         val pathComponent = "test"
         val expected = URI.create("http://example.com/test")
-        assertEquals(expected, uri.append(pathComponent))
+        assertEquals(expected, uri.addSinglePathComponent(pathComponent))
     }
 
     @Test
@@ -22,7 +22,7 @@ class URITest {
         val uri = URI.create("http://example.com")
         val pathComponent = "test|param"
         val expected = URI.create("http://example.com/test%7Cparam")
-        assertEquals(expected, uri.append(pathComponent))
+        assertEquals(expected, uri.addSinglePathComponent(pathComponent))
     }
 
     @Test
@@ -30,28 +30,28 @@ class URITest {
         val uri = URI.create("http://example.com/path")
         val pathComponent = "test"
         val expected = URI.create("http://example.com/path/test")
-        assertEquals(expected, uri.append(pathComponent))
+        assertEquals(expected, uri.addSinglePathComponent(pathComponent))
     }
     @Test
     fun `append path component to URI with existing path and trailing slash`() {
         val uri = URI.create("http://example.com/path/")
         val pathComponent = "test"
         val expected = URI.create("http://example.com/path/test")
-        assertEquals(expected, uri.append(pathComponent))
+        assertEquals(expected, uri.addSinglePathComponent(pathComponent))
     }
     @Test
     fun `append path component to URI with existing path and leading slash`() {
         val uri = URI.create("http://example.com/path")
         val pathComponent = "/test"
         val expected = URI.create("http://example.com/path/test")
-        assertEquals(expected, uri.append(pathComponent))
+        assertEquals(expected, uri.addSinglePathComponent(pathComponent))
     }
     @Test
     fun `append path component to URI with null path component`() {
         val uri = URI.create("http://example.com")
         val pathComponent = null
         val expected = URI.create("http://example.com")
-        assertEquals(expected, uri.append(pathComponent))
+        assertEquals(expected, uri.addSinglePathComponent(pathComponent))
     }
 
     @Test
