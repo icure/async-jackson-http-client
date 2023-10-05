@@ -1,3 +1,6 @@
+import com.github.jk1.license.render.CsvReportRenderer
+import com.github.jk1.license.render.ReportRenderer
+
 /*
  *    Copyright 2020 Taktik SA
  *
@@ -25,6 +28,11 @@ plugins {
     kotlin("jvm") version "1.8.10"
     id("com.taktik.gradle.maven-repository") version "1.0.7"
     id("com.taktik.gradle.git-version") version "2.0.8-gb47b2d0e35"
+    id("com.github.jk1.dependency-license-report") version "2.0"
+}
+
+licenseReport {
+    renderers = arrayOf<ReportRenderer>(CsvReportRenderer())
 }
 
 buildscript {
