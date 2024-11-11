@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Assertions.*
 import java.nio.ByteBuffer
 
 class JsonExtensionsKtTest {
-    val objectMapper = ObjectMapper().registerModule(KotlinModule()).registerModule(JavaTimeModule()).apply {
+    val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build()).registerModule(JavaTimeModule()).apply {
         setSerializationInclusion(JsonInclude.Include.NON_NULL)
         configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true)
     }
