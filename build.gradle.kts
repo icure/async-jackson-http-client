@@ -20,9 +20,9 @@ import com.github.jk1.license.render.ReportRenderer
 
 val kotlinVersion = "1.9.25"
 val kotlinCoroutinesVersion = "1.8.1"
-val jacksonVersion = "2.17.2"
-val reactorNettyVersion = "1.1.23"
-val nettyVersion = "4.1.114.Final"
+val jacksonVersion = "2.19.1"
+val reactorNettyVersion = "1.2.7"
+val nettyVersion = "4.1.122.Final"
 
 plugins {
     kotlin("jvm") version "1.8.10"
