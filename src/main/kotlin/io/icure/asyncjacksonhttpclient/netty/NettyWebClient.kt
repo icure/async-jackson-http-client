@@ -17,6 +17,7 @@
 
 package io.icure.asyncjacksonhttpclient.netty
 
+import io.icure.asyncjacksonhttpclient.exception.TimeoutException
 import io.icure.asyncjacksonhttpclient.net.web.HttpMethod
 import io.icure.asyncjacksonhttpclient.net.web.Request
 import io.icure.asyncjacksonhttpclient.net.web.Response
@@ -131,6 +132,8 @@ class NettyResponse(
             }.doOnTerminate {
                 timingHandler?.let { it(System.currentTimeMillis() - start).contextWrite(ctx).subscribe() }
             }.single()
+        }.onErrorMap(io.netty.handler.timeout.ReadTimeoutException::class.java) {
+            TimeoutException(it)
         }
     }
 
@@ -170,7 +173,9 @@ class NettyResponse(
             })
         }.doOnTerminate {
             timingHandler?.let { it(System.currentTimeMillis() - start).contextWrite(ctx).subscribe() }
-        } }
+        } }.onErrorMap(io.netty.handler.timeout.ReadTimeoutException::class.java) {
+            TimeoutException(it)
+        }
     }
 
     override fun onStatus(status: Int, handler: (ResponseStatus) -> Mono<out Throwable>): Response {
