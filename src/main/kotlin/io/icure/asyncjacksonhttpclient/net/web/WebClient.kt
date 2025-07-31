@@ -47,6 +47,11 @@ interface WebClient {
 
 @ExperimentalCoroutinesApi
 interface Request {
+    /**
+     * @duration set a response timeout
+     * @throws io.icure.asyncjacksonhttpclient.exception.TimeoutException if the [timeoutDuration] is elapsed while
+     * receiving the response
+     */
     fun method(method: HttpMethod, timeoutDuration: Duration? = null): Request
     fun basicAuth(username: String, password: String): Request {
         return header(
