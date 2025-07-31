@@ -91,12 +91,11 @@ class NettyResponse(
         return Mono.deferContextual { ctx ->
             responseReceiver.response { clientResponse, flux ->
                 val code = clientResponse.status().code()
-
+                val responseHeaders = clientResponse.responseHeaders()
                 val headerHandlers = (if (headerHandler.isNotEmpty()) {
-                    clientResponse.responseHeaders().fold(Mono.empty<Any>()) { m: Mono<*>, (k, v) -> m.then(headerHandler[k]?.let { it(v) } ?: Mono.empty()) }
+                    responseHeaders.fold(Mono.empty<Any>()) { m: Mono<*>, (k, v) -> m.then(headerHandler[k]?.let { it(v) } ?: Mono.empty()) }
                 } else Mono.empty())
-
-                val tmpHeaders: Map<String, List<String>> = emptyMap()
+                val headers: Map<String, List<String>> = responseHeaders.groupBy({ it.key }, { it.value })
 
                 headerHandlers.then(
                     (statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let { handler ->
@@ -106,7 +105,7 @@ class NettyResponse(
                                 override fun responseBodyAsString() = bytes.toString(Charsets.UTF_8)
                             })
                             if (res == Mono.empty<Throwable>()) {
-                                handler(Flux.just(ByteBuffer.wrap(bytes)), code, tmpHeaders)
+                                handler(Flux.just(ByteBuffer.wrap(bytes)), code, headers)
                             } else {
                                 res.flatMap { Mono.error(it) }
                             }
@@ -114,7 +113,7 @@ class NettyResponse(
                             override fun responseBodyAsString() = ""
                         }).let { res ->
                             if (res == Mono.empty<Throwable>()) {
-                                handler(Flux.just(ByteBuffer.wrap(ByteArray(0))), code, tmpHeaders)
+                                handler(Flux.just(ByteBuffer.wrap(ByteArray(0))), code, headers)
                             } else {
                                 res.flatMap { Mono.error(it) }
                             }
@@ -126,7 +125,7 @@ class NettyResponse(
                             ByteBuffer.wrap(ba)
                         },
                         code,
-                        tmpHeaders
+                        headers
                     )
                 )
             }.doOnTerminate {
