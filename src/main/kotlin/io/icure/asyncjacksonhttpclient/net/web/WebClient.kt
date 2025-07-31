@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.reactive.asFlow
 import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.net.URI
 import java.nio.ByteBuffer
@@ -67,6 +68,13 @@ interface Request {
 
 @ExperimentalCoroutinesApi
 interface Response {
+    fun <T> toMono(
+        handler: (
+            body: Flux<ByteBuffer>,
+            statusCode: Int,
+            headers: Map<String, List<String>>
+        ) -> Mono<T>,
+    ): Mono<T>
     fun toFlux(): Publisher<ByteBuffer>
     fun toFlow() = toFlux().asFlow()
     fun onStatus(status: Int, handler: (ResponseStatus) -> Mono<out Throwable>): Response
