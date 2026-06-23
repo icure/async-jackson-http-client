@@ -17,11 +17,11 @@
 
 package io.icure.asyncjacksonhttpclient.parser
 
-import com.fasterxml.jackson.core.JsonToken
-import com.fasterxml.jackson.core.async.ByteArrayFeeder
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.util.TokenBuffer
+import tools.jackson.core.JsonToken
+import tools.jackson.core.async.ByteArrayFeeder
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.util.TokenBuffer
 import io.icure.asyncjacksonhttpclient.exception.WebClientException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -130,7 +130,7 @@ object FalseValue : BooleanValue(false)
  */
 object NullValue : Value<Any?>(null)
 
-fun Iterable<ByteBuffer>.toJsonEvents(asyncParser: com.fasterxml.jackson.core.JsonParser): List<JsonEvent> {
+fun Iterable<ByteBuffer>.toJsonEvents(asyncParser: tools.jackson.core.JsonParser): List<JsonEvent> {
     val result = ArrayList<JsonEvent>()
     val byteBuffers = this.iterator()
     if (!byteBuffers.hasNext()) {
@@ -142,7 +142,7 @@ fun Iterable<ByteBuffer>.toJsonEvents(asyncParser: com.fasterxml.jackson.core.Js
         while (byteBuffer.hasRemaining() || t !== JsonToken.NOT_AVAILABLE) {
             while (asyncParser.nextToken().also { t = it } === JsonToken.NOT_AVAILABLE && byteBuffer.hasRemaining()) {
                 // need to feed more
-                val feeder: ByteArrayFeeder = asyncParser.nonBlockingInputFeeder as ByteArrayFeeder
+                val feeder: ByteArrayFeeder = asyncParser.nonBlockingInputFeeder() as ByteArrayFeeder
                 if (feeder.needMoreInput()) {
                     if (byteBuffer.hasArray()) {
                         feeder.feedInput(
@@ -162,19 +162,19 @@ fun Iterable<ByteBuffer>.toJsonEvents(asyncParser: com.fasterxml.jackson.core.Js
                 JsonToken.END_OBJECT -> result.add(EndObject)
                 JsonToken.START_ARRAY -> result.add(StartArray)
                 JsonToken.END_ARRAY -> result.add(EndArray)
-                JsonToken.FIELD_NAME -> result.add(FieldName(asyncParser.currentName))
-                JsonToken.VALUE_STRING -> result.add(StringValue(asyncParser.text))
+                JsonToken.PROPERTY_NAME -> result.add(FieldName(asyncParser.currentName()))
+                JsonToken.VALUE_STRING -> result.add(StringValue(asyncParser.string))
                 JsonToken.VALUE_NUMBER_INT -> result.add(
                     when (asyncParser.numberType) {
-                        com.fasterxml.jackson.core.JsonParser.NumberType.INT -> IntValue(asyncParser.intValue)
-                        com.fasterxml.jackson.core.JsonParser.NumberType.BIG_INTEGER -> BigIntValue(asyncParser.bigIntegerValue)
+                        tools.jackson.core.JsonParser.NumberType.INT -> IntValue(asyncParser.intValue)
+                        tools.jackson.core.JsonParser.NumberType.BIG_INTEGER -> BigIntValue(asyncParser.bigIntegerValue)
                         else -> LongValue(asyncParser.longValue)
                     }
                 )
                 JsonToken.VALUE_NUMBER_FLOAT -> result.add(
                     when (asyncParser.numberType) {
-                        com.fasterxml.jackson.core.JsonParser.NumberType.BIG_DECIMAL -> BigDecimalValue(asyncParser.decimalValue)
-                        com.fasterxml.jackson.core.JsonParser.NumberType.FLOAT -> FloatValue(asyncParser.floatValue)
+                        tools.jackson.core.JsonParser.NumberType.BIG_DECIMAL -> BigDecimalValue(asyncParser.decimalValue)
+                        tools.jackson.core.JsonParser.NumberType.FLOAT -> FloatValue(asyncParser.floatValue)
                         else -> DoubleValue(asyncParser.doubleValue)
                     }
                 )
@@ -228,13 +228,13 @@ fun Flow<CharBuffer>.split(delimiter: Char, emptyGroupCallback: (() -> Unit)? = 
 }
 
 @ExperimentalCoroutinesApi
-fun Flow<ByteBuffer>.toJsonEvents(asyncParser: com.fasterxml.jackson.core.JsonParser): Flow<JsonEvent> {
+fun Flow<ByteBuffer>.toJsonEvents(asyncParser: tools.jackson.core.JsonParser): Flow<JsonEvent> {
     var t: JsonToken = JsonToken.NOT_AVAILABLE
     return transform { byteBuffer ->
         while (byteBuffer.hasRemaining() || t !== JsonToken.NOT_AVAILABLE) {
             while (asyncParser.nextToken().also { t = it } === JsonToken.NOT_AVAILABLE && byteBuffer.hasRemaining()) {
                 // need to feed more
-                val feeder: ByteArrayFeeder = asyncParser.getNonBlockingInputFeeder() as ByteArrayFeeder
+                val feeder: ByteArrayFeeder = asyncParser.nonBlockingInputFeeder() as ByteArrayFeeder
                 if (feeder.needMoreInput()) {
                     if (byteBuffer.hasArray()) {
                         feeder.feedInput(
@@ -254,19 +254,19 @@ fun Flow<ByteBuffer>.toJsonEvents(asyncParser: com.fasterxml.jackson.core.JsonPa
                 JsonToken.END_OBJECT -> emit(EndObject)
                 JsonToken.START_ARRAY -> emit(StartArray)
                 JsonToken.END_ARRAY -> emit(EndArray)
-                JsonToken.FIELD_NAME -> emit(FieldName(asyncParser.currentName))
-                JsonToken.VALUE_STRING -> emit(StringValue(asyncParser.text))
+                JsonToken.PROPERTY_NAME -> emit(FieldName(asyncParser.currentName()))
+                JsonToken.VALUE_STRING -> emit(StringValue(asyncParser.string))
                 JsonToken.VALUE_NUMBER_INT -> emit(
                     when (asyncParser.numberType) {
-                        com.fasterxml.jackson.core.JsonParser.NumberType.INT -> IntValue(asyncParser.intValue)
-                        com.fasterxml.jackson.core.JsonParser.NumberType.BIG_INTEGER -> BigIntValue(asyncParser.bigIntegerValue)
+                        tools.jackson.core.JsonParser.NumberType.INT -> IntValue(asyncParser.intValue)
+                        tools.jackson.core.JsonParser.NumberType.BIG_INTEGER -> BigIntValue(asyncParser.bigIntegerValue)
                         else -> LongValue(asyncParser.longValue)
                     }
                 )
                 JsonToken.VALUE_NUMBER_FLOAT -> emit(
                     when (asyncParser.numberType) {
-                        com.fasterxml.jackson.core.JsonParser.NumberType.BIG_DECIMAL -> BigDecimalValue(asyncParser.decimalValue)
-                        com.fasterxml.jackson.core.JsonParser.NumberType.FLOAT -> FloatValue(asyncParser.floatValue)
+                        tools.jackson.core.JsonParser.NumberType.BIG_DECIMAL -> BigDecimalValue(asyncParser.decimalValue)
+                        tools.jackson.core.JsonParser.NumberType.FLOAT -> FloatValue(asyncParser.floatValue)
                         else -> DoubleValue(asyncParser.doubleValue)
                     }
                 )
@@ -289,9 +289,9 @@ suspend fun <T> Flow<ByteBuffer>.toObject(type: TypeReference<T>, mapper: Object
     mapper.createNonBlockingByteArrayParser().let { asyncParser ->
         var buffer: TokenBuffer? = null
         this.toJsonEvents(asyncParser)
-            .collect { (buffer ?: TokenBuffer(asyncParser).also { b -> buffer = b }).copyFromJsonEvent(it) }
+            .collect { (buffer ?: TokenBuffer.forBuffering(asyncParser, asyncParser.objectReadContext()).also { b -> buffer = b }).copyFromJsonEvent(it) }
 
-        (buffer?.asParser(mapper)?.readValueAs(type) as T?)
+        (buffer?.asParser(asyncParser.objectReadContext())?.readValueAs(type) as T?)
             ?: if (emptyResponseAsNull) null else throw WebClientException("Empty response is not allowed", 500, "")
     }
 
@@ -301,9 +301,9 @@ suspend fun <T> Flow<ByteBuffer>.toObject(clazz: Class<T>, mapper: ObjectMapper,
     mapper.createNonBlockingByteArrayParser().let { asyncParser ->
         var buffer: TokenBuffer? = null
         this.toJsonEvents(asyncParser)
-            .collect { (buffer ?: TokenBuffer(asyncParser).also { b -> buffer = b }).copyFromJsonEvent(it) }
+            .collect { (buffer ?: TokenBuffer.forBuffering(asyncParser, asyncParser.objectReadContext()).also { b -> buffer = b }).copyFromJsonEvent(it) }
 
-        (buffer?.asParser(mapper)?.readValueAs(clazz))
+        (buffer?.asParser(asyncParser.objectReadContext())?.readValueAs(clazz))
             ?: if (emptyResponseAsNull) null else throw WebClientException("Empty response is not allowed", 500, "")
     }
 
@@ -383,10 +383,10 @@ suspend fun ReceiveChannel<JsonEvent>.nextValue(): List<JsonEvent> {
     return events
 }
 
-suspend fun ReceiveChannel<JsonEvent>.nextValue(asyncParser: com.fasterxml.jackson.core.JsonParser): TokenBuffer? {
+suspend fun ReceiveChannel<JsonEvent>.nextValue(asyncParser: tools.jackson.core.JsonParser): TokenBuffer? {
     val event = receive()
     return if (event === EndArray) null else {
-        val events = TokenBuffer(asyncParser)
+        val events = TokenBuffer.forBuffering(asyncParser, asyncParser.objectReadContext())
         events.copyFromJsonEvent(event)
         when (event) {
             StartArray -> {
@@ -426,7 +426,7 @@ fun TokenBuffer.copyFromJsonEvent(jsonEvent: JsonEvent) {
         jsonEvent === EndObject -> this.writeEndObject()
         jsonEvent === StartArray -> this.writeStartArray()
         jsonEvent === EndArray -> this.writeEndArray()
-        jsonEvent is FieldName -> this.writeFieldName(jsonEvent.name)
+        jsonEvent is FieldName -> this.writeName(jsonEvent.name)
         jsonEvent is StringValue -> this.writeString(jsonEvent.value)
         jsonEvent is IntValue -> this.writeNumber(jsonEvent.value)
         jsonEvent is FloatValue -> this.writeNumber(jsonEvent.value)
@@ -437,7 +437,7 @@ fun TokenBuffer.copyFromJsonEvent(jsonEvent: JsonEvent) {
         jsonEvent === TrueValue -> this.writeBoolean(true)
         jsonEvent === FalseValue -> this.writeBoolean(false)
         jsonEvent === NullValue -> this.writeNull()
-        jsonEvent is AnyValue -> this.writeObject(jsonEvent.value)
+        jsonEvent is AnyValue -> this.writePOJO(jsonEvent.value)
         else -> throw RuntimeException("Internal error: should never end up through this code path")
     }
 }

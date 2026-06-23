@@ -18,14 +18,14 @@ import com.github.jk1.license.render.ReportRenderer
  *
  */
 
-val kotlinVersion = "1.9.25"
+val kotlinVersion = "2.1.21"
 val kotlinCoroutinesVersion = "1.8.1"
-val jacksonVersion = "2.19.1"
+val jacksonVersion = "3.1.4"
 val reactorNettyVersion = "1.2.7"
 val nettyVersion = "4.1.122.Final"
 
 plugins {
-    kotlin("jvm") version "1.8.10"
+    kotlin("jvm") version "2.1.21"
     id("com.taktik.gradle.maven-repository") version "1.0.7"
     id("com.taktik.gradle.git-version") version "2.0.8-gb47b2d0e35"
     id("com.github.jk1.dependency-license-report") version "2.0"
@@ -56,13 +56,13 @@ dependencies {
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = kotlinCoroutinesVersion)
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-reactor", version = kotlinCoroutinesVersion)
     implementation(group = "io.projectreactor.netty", name = "reactor-netty", version = reactorNettyVersion)
-    implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jacksonVersion)
+    implementation(group = "tools.jackson.core", name = "jackson-databind", version = jacksonVersion)
     implementation(group = "org.apache.httpcomponents", name = "httpclient", version = "4.5.14")
 
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = "5.8.0")
-    testImplementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jacksonVersion)
-    testImplementation(group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310", version = jacksonVersion)
-    testImplementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jacksonVersion)
+    // Jackson 3 merged the Java 8 date/time support (formerly jackson-datatype-jsr310) into jackson-databind,
+    // so JavaTimeModule ships with databind and no separate datatype dependency is required.
+    testImplementation(group = "tools.jackson.module", name = "jackson-module-kotlin", version = jacksonVersion)
 }
 
 java {

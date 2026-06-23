@@ -17,7 +17,7 @@
 
 package io.icure.asyncjacksonhttpclient.net.web
 
-import com.fasterxml.jackson.core.JsonParser
+import tools.jackson.core.JsonParser
 import io.icure.asyncjacksonhttpclient.parser.toJsonEvents
 import io.netty.handler.codec.http.HttpHeaderNames
 import kotlinx.coroutines.ExperimentalCoroutinesApi
