@@ -19,7 +19,7 @@ internal class NettyWebClientTest {
         var timing = 0L
         try {
             NettyWebClient()
-                .uri("https://kraken.icure.dev/rest/v1/user/current")
+                .uri("https://api.icure.dev/rest/v1/user/current")
                 .method(HttpMethod.GET)
                 .basicAuth("aaaa", "bbbb")
                 .retrieve()

@@ -1,12 +1,11 @@
 package io.icure.asyncjacksonhttpclient.parser
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.json.JsonReadFeature
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
+import tools.jackson.core.json.JsonReadFeature
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinModule
+import tools.jackson.module.kotlin.readValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -14,10 +13,15 @@ import org.junit.jupiter.api.Assertions.*
 import java.nio.ByteBuffer
 
 class JsonExtensionsKtTest {
-    val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build()).registerModule(JavaTimeModule()).apply {
-        setSerializationInclusion(JsonInclude.Include.NON_NULL)
-        configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true)
-    }
+    // Jackson 3: ObjectMapper is immutable and configured through a builder. The Kotlin module is added
+    // explicitly; Java 8 date/time support is built into jackson-databind and registered automatically
+    // (the former JavaTimeModule no longer exists). JsonReadFeature is set directly on the builder, so the
+    // 2.x `JsonReadFeature.mappedFeature()` bridge is gone.
+    val objectMapper = JsonMapper.builder()
+        .addModule(KotlinModule.Builder().build())
+        .changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_NULL) }
+        .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
+        .build()
 
     @org.junit.jupiter.api.Test
     fun testObject() = runBlocking {
