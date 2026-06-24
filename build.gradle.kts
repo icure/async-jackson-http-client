@@ -76,3 +76,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         jvmTarget = "17"
     }
 }
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
