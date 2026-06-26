@@ -85,18 +85,19 @@ class NettyResponse(
     private val responseReceiver: HttpClient.ResponseReceiver<*>,
     private val statusHandlers: Map<Int, (ResponseStatus) -> Mono<out Throwable>> = mapOf(),
     private val headerHandler: Map<String, (String) -> Mono<Unit>> = mapOf(),
-    private val timingHandler: ((Long) -> Mono<Unit>)? = null,
+    private val timingHandler: ((timing: Long, responseHeaders: Map<String, List<String>>) -> Mono<Unit>)? = null,
     ) : Response {
     override fun <T> toMono(handler: (Flux<ByteBuffer>, Int, Map<String, List<String>>) -> Mono<T>): Mono<T> {
         val start = System.currentTimeMillis()
         return Mono.deferContextual { ctx ->
+            val headers = mutableMapOf<String, List<String>>()
             responseReceiver.response { clientResponse, flux ->
                 val code = clientResponse.status().code()
                 val responseHeaders = clientResponse.responseHeaders()
                 val headerHandlers = (if (headerHandler.isNotEmpty()) {
                     responseHeaders.fold(Mono.empty<Any>()) { m: Mono<*>, (k, v) -> m.then(headerHandler[k]?.let { it(v) } ?: Mono.empty()) }
                 } else Mono.empty())
-                val headers: Map<String, List<String>> = responseHeaders.groupBy({ it.key }, { it.value })
+                headers.putAll(responseHeaders.groupBy({ it.key }, { it.value }))
 
                 headerHandlers.then(
                     (statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let { handler ->
@@ -130,7 +131,11 @@ class NettyResponse(
                     )
                 )
             }.doOnTerminate {
-                timingHandler?.let { it(System.currentTimeMillis() - start).contextWrite(ctx).subscribe() }
+                timingHandler?.let {
+                    it(System.currentTimeMillis() - start, headers)
+                        .contextWrite(ctx)
+                        .subscribe()
+                }
             }.single()
         }.onErrorMap(io.netty.handler.timeout.ReadTimeoutException::class.java) {
             TimeoutException(it)
@@ -139,41 +144,54 @@ class NettyResponse(
 
     override fun toFlux(): Flux<ByteBuffer> {
         val start = System.currentTimeMillis()
-        return Flux.deferContextual { ctx -> responseReceiver.response { clientResponse, flux ->
-            val code = clientResponse.status().code()
+        return Flux.deferContextual { ctx ->
+            val headers = mutableMapOf<String, List<String>>()
+            responseReceiver.response { clientResponse, flux ->
+                val code = clientResponse.status().code()
 
-            val headerHandlers = (if (headerHandler.isNotEmpty()) {
-                clientResponse.responseHeaders().fold(Mono.empty<Any>()) { m: Mono<*>, (k, v) -> m.then(headerHandler[k]?.let { it(v) } ?: Mono.empty()) }
-            } else Mono.empty())
+                val responseHeaders = clientResponse.responseHeaders()
+                headers.putAll(responseHeaders.groupBy({ it.key }, { it.value }))
+                val headerHandlers = if (headerHandler.isNotEmpty()) {
+                    responseHeaders.fold(Mono.empty<Any>()) { m: Mono<*>, (k, v) ->
+                        m.then(headerHandler[k]?.let { it(v) } ?: Mono.empty())
+                    }
+                } else {
+                    Mono.empty()
+                }
 
-            headerHandlers.thenMany((statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let { handler ->
-                val agg = flux.aggregate().asByteArray()
-                agg.flatMap { bytes ->
-                    val res = handler(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
-                        override fun responseBodyAsString() = bytes.toString(Charsets.UTF_8)
+                headerHandlers.thenMany((statusHandlers[code] ?: statusHandlers[code - (code % 100)])?.let { handler ->
+                    val agg = flux.aggregate().asByteArray()
+                    agg.flatMap { bytes ->
+                        val res = handler(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
+                            override fun responseBodyAsString() = bytes.toString(Charsets.UTF_8)
+                        })
+                        if (res == Mono.empty<Throwable>()) {
+                            Mono.just(ByteBuffer.wrap(bytes))
+                        } else {
+                            res.flatMap { Mono.error(it) }
+                        }
+                    }.switchIfEmpty(handler(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
+                        override fun responseBodyAsString() = ""
+                    }).let { res ->
+                        if (res == Mono.empty<Throwable>()) {
+                            Mono.just(ByteBuffer.wrap(ByteArray(0)))
+                        } else {
+                            res.flatMap { Mono.error(it) }
+                        }
                     })
-                    if (res == Mono.empty<Throwable>()) {
-                        Mono.just(ByteBuffer.wrap(bytes))
-                    } else {
-                        res.flatMap { Mono.error(it) }
-                    }
-                }.switchIfEmpty(handler(object : ResponseStatus(code, clientResponse.responseHeaders().entries()) {
-                    override fun responseBodyAsString() = ""
-                }).let { res ->
-                    if (res == Mono.empty<Throwable>()) {
-                        Mono.just(ByteBuffer.wrap(ByteArray(0)))
-                    } else {
-                        res.flatMap { Mono.error(it) }
-                    }
+                } ?: flux.map {
+                    val ba = ByteArray(it.readableBytes())
+                    it.readBytes(ba) //Bytes need to be read now, before they become unavailable. If we just return the nioBuffer(), we have no guarantee that the bytes will be the same when the ByteBuffer will be processed down the flux
+                    ByteBuffer.wrap(ba)
                 })
-            } ?: flux.map {
-                val ba = ByteArray(it.readableBytes())
-                it.readBytes(ba) //Bytes need to be read now, before they become unavailable. If we just return the nioBuffer(), we have no guarantee that the bytes will be the same when the ByteBuffer will be processed down the flux
-                ByteBuffer.wrap(ba)
-            })
-        }.doOnTerminate {
-            timingHandler?.let { it(System.currentTimeMillis() - start).contextWrite(ctx).subscribe() }
-        } }.onErrorMap(io.netty.handler.timeout.ReadTimeoutException::class.java) {
+            }.doOnTerminate {
+                timingHandler?.let {
+                    it(System.currentTimeMillis() - start, headers)
+                        .contextWrite(ctx)
+                        .subscribe()
+                }
+            }
+        }.onErrorMap(io.netty.handler.timeout.ReadTimeoutException::class.java) {
             TimeoutException(it)
         }
     }
@@ -186,7 +204,7 @@ class NettyResponse(
         return NettyResponse(responseReceiver, statusHandlers, headerHandler + (header to handler), timingHandler)
     }
 
-    override fun withTiming(handler: (Long) -> Mono<Unit>): Response {
+    override fun withTiming(handler: (timing: Long, responseHeaders: Map<String, List<String>>) -> Mono<Unit>): Response {
         return NettyResponse(responseReceiver, statusHandlers, headerHandler, handler)
     }
 }

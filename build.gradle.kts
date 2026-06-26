@@ -23,6 +23,7 @@ val kotlinCoroutinesVersion = "1.8.1"
 val jacksonVersion = "2.19.1"
 val reactorNettyVersion = "1.2.7"
 val nettyVersion = "4.1.122.Final"
+val kotestVersion = "5.9.1"
 
 plugins {
     kotlin("jvm") version "1.8.10"
@@ -59,10 +60,14 @@ dependencies {
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = jacksonVersion)
     implementation(group = "org.apache.httpcomponents", name = "httpclient", version = "4.5.14")
 
-    testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = "5.8.0")
+    testImplementation(group = "io.kotest", name = "kotest-runner-junit5", version = kotestVersion)
+    testImplementation(group = "io.kotest", name = "kotest-assertions-core", version = kotestVersion)
     testImplementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jacksonVersion)
     testImplementation(group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310", version = jacksonVersion)
-    testImplementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jacksonVersion)
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
 
 java {
