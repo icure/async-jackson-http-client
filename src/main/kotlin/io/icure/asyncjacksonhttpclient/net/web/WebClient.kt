@@ -85,7 +85,7 @@ interface Response {
     fun onStatus(status: Int, handler: (ResponseStatus) -> Mono<out Throwable>): Response
     fun onHeader(header: String, handler: (String) -> Mono<Unit>): Response
 
-    fun withTiming(handler: (Long) -> Mono<Unit>): Response
+    fun withTiming(handler: (timing: Long, responseHeaders: Map<String, List<String>>) -> Mono<Unit>): Response
 
     /**
     Execute this WebClient [WebClient.RequestHeadersSpec] and get the response as a [Flow] of [ByteBuffer].
