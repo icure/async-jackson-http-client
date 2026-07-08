@@ -3,12 +3,9 @@ steps:
         entrypoint: 'bash'
         args: [ '-c', 'git fetch --unshallow --tags && git checkout ${BRANCH_NAME} && git submodule init && git submodule update' ]
 
-    -   name: 'gcr.io/cloud-builders/docker'
-        args: ['login', 'docker.taktik.be', '--username', '${_REPO_USERNAME}', '--password', '${_REPO_PASSWORD}']
-
-    -   name: 'docker.taktik.be/javac' # java + docker
+    -   name: 'gradle:7.6.4-jdk17'
         entrypoint: 'bash'
-        args: [ '-c', './gradlew publish' ]
+        args: [ '-c', 'git config --global --add safe.directory "$$PWD" && ./gradlew publish' ]
         env:
           - 'ORG_GRADLE_PROJECT_repoUsername=${_REPO_USERNAME}'
           - 'ORG_GRADLE_PROJECT_repoPassword=${_REPO_PASSWORD}'
